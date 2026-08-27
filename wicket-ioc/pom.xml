@@ -30,6 +30,33 @@
 		Wicket IoC common dependencies for injection and proxying. Used by
 		Spring, Guice, etc.
 	</description>
+	<properties>
+		<byte-buddy.version>1.11.12</byte-buddy.version>
+	</properties>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>net.bytebuddy</groupId>
+				<artifactId>byte-buddy</artifactId>
+				<version>${byte-buddy.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.ow2.asm</groupId>
+				<artifactId>asm</artifactId>
+				<version>${asm.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.ow2.asm</groupId>
+				<artifactId>asm-commons</artifactId>
+				<version>${asm.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.ow2.asm</groupId>
+				<artifactId>asm-util</artifactId>
+				<version>${asm.version}</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 	<dependencies>
 		<dependency>
 			<groupId>org.hamcrest</groupId>
@@ -46,7 +73,6 @@
 		<dependency>
 			<groupId>net.bytebuddy</groupId>
 			<artifactId>byte-buddy</artifactId>
-			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.wicket</groupId>
