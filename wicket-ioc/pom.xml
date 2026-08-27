@@ -31,8 +31,11 @@
 		Spring, Guice, etc.
 	</description>
 	<properties>
+		<bundle.classifier>bytebuddy</bundle.classifier>
+		<obrRepository>NONE</obrRepository>
 		<byte-buddy.version>1.11.12</byte-buddy.version>
 		<asm.version>9.1</asm.version>
+		<version.wicket>8.20.0</version.wicket>
 	</properties>
 	<dependencyManagement>
 		<dependencies>
@@ -40,6 +43,11 @@
 				<groupId>net.bytebuddy</groupId>
 				<artifactId>byte-buddy</artifactId>
 				<version>${byte-buddy.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.wicket</groupId>
+				<artifactId>wicket-core</artifactId>
+				<version>${version.wicket}</version>
 			</dependency>
 			<dependency>
 				<groupId>org.ow2.asm</groupId>
@@ -74,7 +82,6 @@
 		<dependency>
 			<groupId>org.apache.wicket</groupId>
 			<artifactId>wicket-core</artifactId>
-			<version>${project.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.objenesis</groupId>
@@ -91,6 +98,17 @@
 		</dependency>
 	</dependencies>
 	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.felix</groupId>
+					<artifactId>maven-bundle-plugin</artifactId>
+					<configuration>
+						<classifier>${bundle.classifier}</classifier>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 		<plugins>
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>

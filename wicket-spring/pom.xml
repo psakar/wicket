@@ -41,6 +41,8 @@
 		<dependency>
 			<groupId>org.apache.wicket</groupId>
 			<artifactId>wicket-ioc</artifactId>
+			<classifier>bytebuddy</classifier>
+			<version>${project.version}</version>
 		</dependency>
 	</dependencies>
 </project>
