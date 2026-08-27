@@ -23,7 +23,7 @@ import net.sf.cglib.core.NamingPolicy;
 /**
  * @deprecated no longer used
  */
-@Deprecated(forRemoval = true)
+@Deprecated
 public class ObjenesisProxyFactory
 {
 	public static Object createProxy(final Class<?> type, final IProxyTargetLocator locator, NamingPolicy namingPolicy)
