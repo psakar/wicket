@@ -117,7 +117,7 @@ public class LazyInitProxyFactory
     private static IProxyFactory initProxyFactory() {
 		IProxyFactory proxyFactory = null; 
 		
-		if ("true".equals(System.getProperty("wicket.ioc.useByteBuddy"))) {
+		if ("true".equals(System.getProperty("wicket.ioc.useByteBuddy", "true"))) {
 			log.info("using Byte Buddy proxy factory");
 			proxyFactory = new ByteBuddyProxyFactory();
 		} else {
