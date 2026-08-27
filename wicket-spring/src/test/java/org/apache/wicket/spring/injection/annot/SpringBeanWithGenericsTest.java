@@ -295,7 +295,7 @@ public class SpringBeanWithGenericsTest extends Assert
 		@Bean
 		public List<String> stringsList()
 		{
-			return List.of("foo", "bar", "baz");
+			return Arrays.asList("foo", "bar", "baz");
 		}
 
 		@Bean

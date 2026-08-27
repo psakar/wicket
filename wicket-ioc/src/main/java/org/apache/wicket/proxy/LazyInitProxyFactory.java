@@ -240,7 +240,7 @@ public class LazyInitProxyFactory
 	 * @author Igor Vaynberg (ivaynberg)
 	 * 
 	 */
-	@Deprecated(forRemoval = true)
+	@Deprecated
 	public abstract static class AbstractCGLibInterceptor
 		implements
 			MethodInterceptor,
@@ -358,7 +358,7 @@ public class LazyInitProxyFactory
 	/**
 	 * @deprecated no longer used
 	 */
-	@Deprecated(forRemoval = true)
+	@Deprecated
 	public static class SerializableNoOpCallback implements NoOp, Serializable
 	{
 		public static final NoOp INSTANCE = new SerializableNoOpCallback();
@@ -433,7 +433,7 @@ public class LazyInitProxyFactory
 	/**
 	 * @deprecated no longer used
 	 */
-	@Deprecated(forRemoval = true)
+	@Deprecated
 	public static class WicketNamingPolicy extends DefaultNamingPolicy
 	{
 		public static final WicketNamingPolicy INSTANCE = new WicketNamingPolicy();
