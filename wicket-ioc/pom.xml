@@ -20,10 +20,11 @@
 	<parent>
 		<groupId>org.apache.wicket</groupId>
 		<artifactId>wicket-parent</artifactId>
-		<version>8.19.0-SNAPSHOT</version>
+		<version>8.18.0</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 	<artifactId>wicket-ioc</artifactId>
+	<version>8.18.0-bytebuddy</version>
 	<packaging>bundle</packaging>
 	<name>Wicket IoC common code</name>
 	<description>
