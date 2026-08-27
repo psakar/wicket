@@ -161,8 +161,9 @@ the src/ folder.
 
  - wicket-ioc:
 
-    cglib 3.1 (http://cglib.sourceforge.net/) and 
-    asm-util 5.0.3 (http://asm.objectweb.org/)
+    cglib 3.2.12 (http://cglib.sourceforge.net/) and 
+    asm-util 9.1 (https://asm.ow2.io/)
+    byte-buddy 1.11.12 (https://bytebuddy.net/) and 
 
  - wicket-spring:
 

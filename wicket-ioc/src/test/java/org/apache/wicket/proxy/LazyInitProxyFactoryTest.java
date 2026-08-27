@@ -18,6 +18,7 @@ package org.apache.wicket.proxy;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 
+import java.io.ObjectStreamException;
 import java.lang.reflect.Proxy;
 
 import org.apache.wicket.core.util.lang.WicketObjects;
@@ -26,21 +27,24 @@ import org.apache.wicket.proxy.util.ConcreteObject;
 import org.apache.wicket.proxy.util.IInterface;
 import org.apache.wicket.proxy.util.IObjectMethodTester;
 import org.apache.wicket.proxy.util.InterfaceObject;
+import org.apache.wicket.proxy.util.NoDefaultConstructor;
 import org.apache.wicket.proxy.util.ObjectMethodTester;
 import org.junit.Assert;
 import org.junit.Test;
 
 /**
  * Tests lazy init proxy factory
- * 
+ *
  * @author Igor Vaynberg (ivaynberg)
- * 
+ *
  */
 public class LazyInitProxyFactoryTest extends Assert
 {
-	private static InterfaceObject interfaceObject = new InterfaceObject("interface");
+	private static final InterfaceObject interfaceObject = new InterfaceObject("interface");
 
-	private static ConcreteObject concreteObject = new ConcreteObject("concrete");
+	private static final ConcreteObject concreteObject = new ConcreteObject("concrete");
+
+	private static final NoDefaultConstructor noDefaultConstructor = new NoDefaultConstructor("argument");
 
 	private static final PackagePrivateConcreteObject PACKAGE_PRIVATE_CONCRETE_OBJECT = new PackagePrivateConcreteObject("package-private-concrete");
 
@@ -55,7 +59,18 @@ public class LazyInitProxyFactoryTest extends Assert
 		}
 	};
 
-	private static IProxyTargetLocator concreteObjectLocator = new IProxyTargetLocator()
+	private static IProxyTargetLocator noDefaultConstructorLocator = new IProxyTargetLocator()
+	{
+		private static final long serialVersionUID = 1L;
+
+		@Override
+		public Object locateProxyTarget()
+		{
+			return LazyInitProxyFactoryTest.noDefaultConstructor;
+		}
+	};
+
+	private static final IProxyTargetLocator concreteObjectLocator = new IProxyTargetLocator()
 	{
 		private static final long serialVersionUID = 1L;
 
@@ -63,6 +78,11 @@ public class LazyInitProxyFactoryTest extends Assert
 		public Object locateProxyTarget()
 		{
 			return LazyInitProxyFactoryTest.concreteObject;
+		}
+
+		// This method is needed to prevent (de)serialization of this locator instance in #testByteBuddyInterceptorReplacement()
+		private Object readResolve() throws ObjectStreamException {
+			return concreteObjectLocator;
 		}
 	};
 
@@ -103,15 +123,15 @@ public class LazyInitProxyFactoryTest extends Assert
 
 		// test proxy implements ILazyInitProxy
 		assertThat(proxy, instanceOf(ILazyInitProxy.class));
-		assertTrue(((ILazyInitProxy)proxy).getObjectLocator() == interfaceObjectLocator);
+		assertSame(((ILazyInitProxy)proxy).getObjectLocator(), interfaceObjectLocator);
 
 		// test method invocation
-		assertEquals(proxy.getMessage(), "interface");
+		assertEquals("interface", proxy.getMessage());
 
 		// test serialization
 		IInterface proxy2 = WicketObjects.cloneObject(proxy);
-		assertTrue(proxy != proxy2);
-		assertEquals(proxy2.getMessage(), "interface");
+		assertNotSame(proxy, proxy2);
+		assertEquals("interface", proxy2.getMessage());
 
 		// test equals/hashcode method interception
 		final IObjectMethodTester tester = new ObjectMethodTester();
@@ -147,25 +167,26 @@ public class LazyInitProxyFactoryTest extends Assert
 
 		// test proxy implements ILazyInitProxy
 		assertThat(proxy, instanceOf(ILazyInitProxy.class));
-		assertTrue(((ILazyInitProxy)proxy).getObjectLocator() == concreteObjectLocator);
+		final IProxyTargetLocator objectLocator = ((ILazyInitProxy) proxy).getObjectLocator();
+		assertSame(objectLocator, concreteObjectLocator);
 
 		// test we do not have a jdk dynamic proxy
 		assertFalse(Proxy.isProxyClass(proxy.getClass()));
 
 		// test method invocation
-		assertEquals(proxy.getMessage(), "concrete");
+		assertEquals("concrete", proxy.getMessage());
 
 		// test serialization
 		ConcreteObject proxy2 = WicketObjects.cloneObject(proxy);
-		assertTrue(proxy != proxy2);
-		assertEquals(proxy2.getMessage(), "concrete");
+		assertNotSame(proxy, proxy2);
+		assertEquals("concrete", proxy2.getMessage());
 
 		// test equals/hashcode method interception
 		final IObjectMethodTester tester = new ObjectMethodTester();
 		assertTrue(tester.isValid());
 
 		// test only a single class is generated,
-		// otherwise permgen space will fill up with each proxy
+		// otherwise meta space will fill up with each proxy
 		assertSame(proxy.getClass(), LazyInitProxyFactory.createProxy(
 			ConcreteObject.class, concreteObjectLocator).getClass());
 
@@ -243,16 +264,16 @@ public class LazyInitProxyFactoryTest extends Assert
 	}
 
 	/**
-	 * Tests lazy init concrete replacement replacement
+	 * Tests lazy init concrete replacement
 	 */
 	@Test
-	public void testCGLibInterceptorReplacement()
+	public void testInterceptorReplacement()
 	{
 		ProxyReplacement ser = new ProxyReplacement(ConcreteObject.class.getName(),
 			concreteObjectLocator);
 
 		Object proxy2 = WicketObjects.cloneObject(ser);
-		assertEquals(((ConcreteObject)proxy2).getMessage(), "concrete");
+		assertEquals("concrete", ((ConcreteObject)proxy2).getMessage());
 	}
 
 	/**
@@ -266,5 +287,15 @@ public class LazyInitProxyFactoryTest extends Assert
 		// See WICKET-603.
 		String proxy = (String)LazyInitProxyFactory.createProxy(String.class, stringObjectLocator);
 		assertEquals("StringLiteral", proxy);
+	}
+
+	/**
+	 * Test construction via objenesis.
+	 */
+	@Test
+	public void testNoDefaultConstructor()
+	{
+		NoDefaultConstructor proxy = (NoDefaultConstructor)LazyInitProxyFactory.createProxy(
+			NoDefaultConstructor.class, concreteObjectLocator);
 	}
 }
