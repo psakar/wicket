@@ -17,7 +17,6 @@
 package org.apache.wicket.proxy;
 
 import java.io.ObjectStreamException;
-import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
@@ -26,16 +25,10 @@ import org.apache.wicket.WicketRuntimeException;
 import org.apache.wicket.core.util.lang.WicketObjects;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.proxy.bytebuddy.ByteBuddyProxyFactory;
-import org.apache.wicket.proxy.cglib.CglibProxyFactory;
 import org.apache.wicket.proxy.jdk.JdkProxyFactory;
 import org.apache.wicket.util.io.IClusterable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import net.sf.cglib.core.DefaultNamingPolicy;
-import net.sf.cglib.proxy.MethodInterceptor;
-import net.sf.cglib.proxy.MethodProxy;
-import net.sf.cglib.proxy.NoOp;
 
 /**
  * A factory class that creates lazy init proxies given a type and a {@link IProxyTargetLocator}
@@ -46,7 +39,7 @@ import net.sf.cglib.proxy.NoOp;
  * forwarded.
  * <p>
  * This factory creates two kinds of proxies: A standard dynamic proxy when the specified type is an
- * interface, and a cglib proxy when the specified type is a concrete class.
+ * interface, and a Byte Buddy proxy when the specified type is a concrete class.
  * <p>
  * The general use case for such a proxy is to represent a dependency that should not be serialized
  * with a wicket page or {@link IModel}. The solution is to serialize the proxy and the
@@ -113,18 +106,10 @@ public class LazyInitProxyFactory
 		Boolean.class);
 	
 	private static final IProxyFactory proxyFactory = initProxyFactory();
-	
+
     private static IProxyFactory initProxyFactory() {
-		IProxyFactory proxyFactory = null; 
-		
-		if ("true".equals(System.getProperty("wicket.ioc.useByteBuddy", "true"))) {
-			log.info("using Byte Buddy proxy factory");
-			proxyFactory = new ByteBuddyProxyFactory();
-		} else {
-			proxyFactory = new CglibProxyFactory();
-		}
-		
-		return proxyFactory;
+		log.info("using Byte Buddy proxy factory");
+		return new ByteBuddyProxyFactory();
 	}
 
 	/**
@@ -234,137 +219,6 @@ public class LazyInitProxyFactory
 	}
 
 	/**
-	 * Method interceptor for proxies representing concrete object not backed by an interface. These
-	 * proxies are represented by cglib proxies.
-	 * 
-	 * @author Igor Vaynberg (ivaynberg)
-	 * 
-	 */
-	@Deprecated
-	public abstract static class AbstractCGLibInterceptor
-		implements
-			MethodInterceptor,
-			ILazyInitProxy,
-			Serializable,
-			IWriteReplace
-	{
-		private static final long serialVersionUID = 1L;
-
-		protected final IProxyTargetLocator locator;
-
-		protected final String typeName;
-
-		private transient Object target;
-
-		/**
-		 * Constructor
-		 * 
-		 * @param type
-		 *            class of the object this proxy was created for
-		 * 
-		 * @param locator
-		 *            object locator used to locate the object this proxy represents
-		 */
-		public AbstractCGLibInterceptor(final Class<?> type, final IProxyTargetLocator locator)
-		{
-			super();
-			typeName = type.getName();
-			this.locator = locator;
-		}
-
-		/**
-		 * @see net.sf.cglib.proxy.MethodInterceptor#intercept(java.lang.Object,
-		 *      java.lang.reflect.Method, java.lang.Object[], net.sf.cglib.proxy.MethodProxy)
-		 */
-		@Override
-		public Object intercept(final Object object, final Method method, final Object[] args,
-			final MethodProxy proxy) throws Throwable
-		{
-			if (isFinalizeMethod(method))
-			{
-				// swallow finalize call
-				return null;
-			}
-			else if (isEqualsMethod(method))
-			{
-				return (equals(args[0])) ? Boolean.TRUE : Boolean.FALSE;
-			}
-			else if (isHashCodeMethod(method))
-			{
-				return hashCode();
-			}
-			else if (isToStringMethod(method))
-			{
-				return toString();
-			}
-			else if (isWriteReplaceMethod(method))
-			{
-				return writeReplace();
-			}
-			else if (method.getDeclaringClass().equals(ILazyInitProxy.class))
-			{
-				return getObjectLocator();
-			}
-
-			if (target == null)
-			{
-				target = locator.locateProxyTarget();
-			}
-			return proxy.invoke(target, args);
-		}
-
-		/**
-		 * @see org.apache.wicket.proxy.ILazyInitProxy#getObjectLocator()
-		 */
-		@Override
-		public IProxyTargetLocator getObjectLocator()
-		{
-			return locator;
-		}
-
-		@Override
-		public Object writeReplace() throws ObjectStreamException
-		{
-			return new ProxyReplacement(typeName, locator);
-		}
-	}
-
-	/**
-	 * Method interceptor for proxies representing concrete object not backed by an interface. These
-	 * proxies are represented by cglib proxies.
-	 * 
-	 * @author Igor Vaynberg (ivaynberg)
-	 * 
-	 */
-	public static class CGLibInterceptor extends AbstractCGLibInterceptor
-	{
-		private static final long serialVersionUID = 1L;
-
-		/**
-		 * Constructor
-		 * 
-		 * @param type
-		 *            class of the object this proxy was created for
-		 * 
-		 * @param locator
-		 *            object locator used to locate the object this proxy represents
-		 */
-		public CGLibInterceptor(final Class<?> type, final IProxyTargetLocator locator)
-		{
-			super(type, locator);
-		}
-	}
-	
-	/**
-	 * @deprecated no longer used
-	 */
-	@Deprecated
-	public static class SerializableNoOpCallback implements NoOp, Serializable
-	{
-		public static final NoOp INSTANCE = new SerializableNoOpCallback();
-	}
-	
-	/**
 	 * Checks if the method is derived from Object.equals()
 	 * 
 	 * @param method
@@ -428,18 +282,5 @@ public class LazyInitProxyFactory
 	{
 		return (method.getReturnType() == Object.class) &&
 			(method.getParameterTypes().length == 0) && method.getName().equals("writeReplace");
-	}
-	
-	/**
-	 * @deprecated no longer used
-	 */
-	@Deprecated
-	public static class WicketNamingPolicy extends DefaultNamingPolicy
-	{
-		public static final WicketNamingPolicy INSTANCE = new WicketNamingPolicy();
-
-		private WicketNamingPolicy()
-		{
-		}
 	}
 }
