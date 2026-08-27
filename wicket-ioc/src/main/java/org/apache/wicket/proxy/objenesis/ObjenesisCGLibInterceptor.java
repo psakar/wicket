@@ -22,7 +22,7 @@ import org.apache.wicket.proxy.LazyInitProxyFactory;
 /**
  * @deprecated no longer used
  */
-@Deprecated(forRemoval = true)
+@Deprecated
 public class ObjenesisCGLibInterceptor extends LazyInitProxyFactory.AbstractCGLibInterceptor
 {
 	public ObjenesisCGLibInterceptor(Class<?> type, IProxyTargetLocator locator) {
