@@ -1050,6 +1050,31 @@
 								<className>org/apache/wicket/page/IPageManager</className>
 								<method>void endRequest()</method>
 							</difference>
+							<!-- cglib removed in this fork in favor of Byte Buddy (WICKET-6913); these classes required cglib types on their signature -->
+							<difference>
+								<differenceType>8001</differenceType>
+								<className>org/apache/wicket/proxy/LazyInitProxyFactory$AbstractCGLibInterceptor</className>
+							</difference>
+							<difference>
+								<differenceType>8001</differenceType>
+								<className>org/apache/wicket/proxy/LazyInitProxyFactory$CGLibInterceptor</className>
+							</difference>
+							<difference>
+								<differenceType>8001</differenceType>
+								<className>org/apache/wicket/proxy/LazyInitProxyFactory$SerializableNoOpCallback</className>
+							</difference>
+							<difference>
+								<differenceType>8001</differenceType>
+								<className>org/apache/wicket/proxy/LazyInitProxyFactory$WicketNamingPolicy</className>
+							</difference>
+							<difference>
+								<differenceType>8001</differenceType>
+								<className>org/apache/wicket/proxy/objenesis/ObjenesisCGLibInterceptor</className>
+							</difference>
+							<difference>
+								<differenceType>8001</differenceType>
+								<className>org/apache/wicket/proxy/objenesis/ObjenesisProxyFactory</className>
+							</difference>
 						</ignored>
 					</configuration>
 					<executions>
