@@ -132,16 +132,8 @@ public class ByteBuddyProxyFactory implements IProxyFactory
 			return ClassLoadingStrategy.Default.WRAPPER.allowExistingTypes();
 		}
 
-		try
-		{
-			return ClassLoadingStrategy.UsingLookup
-				.of(MethodHandles.privateLookupIn(type, MethodHandles.lookup()));
-		}
-		catch (IllegalAccessException e)
-		{
-			throw new WicketRuntimeException("Cannot create a proxy for " + type.getName()
-				+ ", because its package is not open to " + ByteBuddyProxyFactory.class.getModule(), e);
-		}
+		return ClassLoadingStrategy.Default.INJECTION; // ClassLoadingStrategy.UsingLookup
+		//	.of(MethodHandles.privateLookupIn(type, MethodHandles.lookup()));
 	}
 
 	private static ClassLoader resolveClassLoader()
