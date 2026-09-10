@@ -17,6 +17,7 @@
 package org.apache.wicket.proxy.bytebuddy;
 
 import java.io.Serializable;
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.function.Function;
@@ -114,8 +115,33 @@ public class ByteBuddyProxyFactory implements IProxyFactory
 						.implement(InterceptorMutator.class).intercept(FieldAccessor.ofBeanProperty())
 						.implement(Serializable.class, IWriteReplace.class, ILazyInitProxy.class).intercept(MethodDelegation.toField("interceptor"))
 						.make()
-						.load(classLoader, ClassLoadingStrategy.Default.INJECTION)
-						.getLoaded());
+						.load(classLoader, resolveLoadingStrategy(type))
+						.getLoaded(),
+				DYNAMIC_CLASS_CACHE);
+	}
+
+	/**
+	 * The proxy has to be defined in the same runtime package as the type it proxies, or the
+	 * package private methods it overrides are not overridden at all. Only a proxy for a
+	 * <em>java.**</em> type is renamed into another package, and needs a class loader of its own.
+	 */
+	private static ClassLoadingStrategy<ClassLoader> resolveLoadingStrategy(Class<?> type)
+	{
+		if (type.getName().startsWith("java."))
+		{
+			return ClassLoadingStrategy.Default.WRAPPER.allowExistingTypes();
+		}
+
+		try
+		{
+			return ClassLoadingStrategy.UsingLookup
+				.of(MethodHandles.privateLookupIn(type, MethodHandles.lookup()));
+		}
+		catch (IllegalAccessException e)
+		{
+			throw new WicketRuntimeException("Cannot create a proxy for " + type.getName()
+				+ ", because its package is not open to " + ByteBuddyProxyFactory.class.getModule(), e);
+		}
 	}
 
 	private static ClassLoader resolveClassLoader()
